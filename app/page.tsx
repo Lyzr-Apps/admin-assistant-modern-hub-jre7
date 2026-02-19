@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
@@ -921,7 +920,7 @@ export default function Page() {
         {/* ===== CHAT TAB ===== */}
         {activeTab === 'chat' && (
           <div className="flex-1 flex flex-col min-h-0">
-            <ScrollArea className="flex-1 px-4 py-4">
+            <div className="flex-1 overflow-y-auto px-4 py-4">
               <div className="max-w-3xl mx-auto space-y-5">
                 {/* Welcome */}
                 {messages.length === 0 && !isLoading && (
@@ -1102,7 +1101,7 @@ export default function Page() {
 
                 <div ref={messagesEndRef} />
               </div>
-            </ScrollArea>
+            </div>
 
             {/* Input */}
             <div className="px-4 py-3 border-t border-border/30 bg-white/40 backdrop-blur-md flex-shrink-0">
@@ -1176,7 +1175,7 @@ export default function Page() {
               </div>
             </div>
 
-            <ScrollArea className="flex-1 px-4 py-4">
+            <div className="flex-1 overflow-y-auto px-4 py-4">
               <div className="max-w-3xl mx-auto space-y-3">
                 {filteredTickets.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -1216,14 +1215,14 @@ export default function Page() {
                   ))
                 )}
               </div>
-            </ScrollArea>
+            </div>
           </div>
         )}
 
         {/* ===== KNOWLEDGE BASE TAB ===== */}
         {activeTab === 'kb' && (
           <div className="flex-1 flex flex-col min-h-0">
-            <ScrollArea className="flex-1 px-4 py-4">
+            <div className="flex-1 overflow-y-auto px-4 py-4">
               <div className="max-w-3xl mx-auto space-y-6">
                 <Card className="bg-white/75 backdrop-blur-md border-white/20 shadow-sm">
                   <CardHeader className="pb-3">
@@ -1271,7 +1270,7 @@ export default function Page() {
                   </CardContent>
                 </Card>
               </div>
-            </ScrollArea>
+            </div>
           </div>
         )}
       </main>
