@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import parseLLMJson from '@/lib/jsonParser'
 
+// Allow up to 120 seconds for manager agents with sub-agents and external tools
+export const maxDuration = 120
+
 const LYZR_API_URL = 'https://agent-prod.studio.lyzr.ai/v3/inference/chat/'
 const LYZR_API_KEY = process.env.LYZR_API_KEY || ''
 
@@ -163,14 +166,40 @@ export async function POST(request: NextRequest) {
       payload.assets = assets
     }
 
-    const response = await fetch(LYZR_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': LYZR_API_KEY,
-      },
-      body: JSON.stringify(payload),
-    })
+    // Use AbortController for 110s timeout (manager agents with sub-agents + tools can be slow)
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 110000)
+
+    let response: Response
+    try {
+      response = await fetch(LYZR_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': LYZR_API_KEY,
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      })
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId)
+      if (fetchError?.name === 'AbortError') {
+        return NextResponse.json(
+          {
+            success: false,
+            response: {
+              status: 'error',
+              result: {},
+              message: 'The request timed out. Manager agents with multiple sub-agents may take longer. Please try again.',
+            },
+            error: 'Request timed out after 110 seconds',
+          },
+          { status: 504 }
+        )
+      }
+      throw fetchError
+    }
+    clearTimeout(timeoutId)
 
     const rawText = await response.text()
 

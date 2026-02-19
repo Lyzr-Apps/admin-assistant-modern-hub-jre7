@@ -589,9 +589,16 @@ export default function Page() {
         user_id: userId,
       })
 
-      if (result.success && result.response?.status === 'success') {
-        const data = result.response.result as AgentResponseData | undefined
-        const answer = data?.answer || result.response?.message || 'I received your query but could not generate a detailed response. Please try again.'
+      if (result.success) {
+        const data = result.response?.result as AgentResponseData | undefined
+        // Robust text extraction: try multiple paths for the answer
+        const answer = data?.answer
+          || result.response?.message
+          || (typeof result.response?.result === 'string' ? result.response.result : null)
+          || (result.response?.result?.text)
+          || (result.response?.result?.response)
+          || (result.response?.result?.message)
+          || (result.raw_response ? 'Response received. Please try rephrasing if the answer seems incomplete.' : 'I received your query but could not generate a detailed response. Please try again.')
         const escalated = data?.escalated === true
         const ticketId = data?.ticket_id || ''
         const ticketSubject = data?.ticket_subject || ''
@@ -674,9 +681,9 @@ export default function Page() {
         user_id: userId,
       })
 
-      if (result.success && result.response?.status === 'success') {
-        const data = result.response.result as AgentResponseData | undefined
-        const answer = data?.answer || result.response?.message || 'Your issue has been escalated.'
+      if (result.success) {
+        const data = result.response?.result as AgentResponseData | undefined
+        const answer = data?.answer || result.response?.message || (typeof result.response?.result === 'string' ? result.response.result : null) || 'Your issue has been escalated.'
         const ticketId = data?.ticket_id || `TKT-${Date.now().toString().slice(-6)}`
         const ticketSubject = data?.ticket_subject || subject
         const emailSent = data?.email_sent === true
