@@ -83,6 +83,7 @@ interface Ticket {
   question: string
   createdAt: string
   ticketId: string
+  reportedBy?: string
 }
 
 type NavTab = 'chat' | 'tickets' | 'kb'
@@ -358,16 +359,18 @@ function EscalationForm({
   onSubmit,
   onCancel,
   isSubmitting,
+  defaultUserName,
 }: {
   originalQuestion: string
   suggestedSubject: string
   onSubmit: (subject: string, priority: string, userName: string, notes: string) => void
   onCancel: () => void
   isSubmitting: boolean
+  defaultUserName?: string
 }) {
   const [subject, setSubject] = useState(suggestedSubject)
   const [priority, setPriority] = useState('Medium')
-  const [userName, setUserName] = useState('')
+  const [escalationUserName, setEscalationUserName] = useState(defaultUserName || '')
   const [notes, setNotes] = useState('')
 
   return (
@@ -391,8 +394,8 @@ function EscalationForm({
           <Label htmlFor="ticket-user-name" className="text-xs text-amber-800">Your Name *</Label>
           <Input
             id="ticket-user-name"
-            value={userName}
-            onChange={(e) => setUserName(e.target.value)}
+            value={escalationUserName}
+            onChange={(e) => setEscalationUserName(e.target.value)}
             placeholder="Your full name"
             className="mt-1 text-sm bg-white/80 border-amber-200"
             required
@@ -426,8 +429,8 @@ function EscalationForm({
       <div className="flex items-center gap-2">
         <Button
           size="sm"
-          onClick={() => onSubmit(subject, priority, userName, notes)}
-          disabled={isSubmitting || !subject.trim() || !userName.trim()}
+          onClick={() => onSubmit(subject, priority, escalationUserName, notes)}
+          disabled={isSubmitting || !subject.trim() || !escalationUserName.trim()}
           className="text-xs gap-1"
         >
           {isSubmitting ? (
@@ -509,6 +512,8 @@ export default function Page() {
   const [feedbackGiven, setFeedbackGiven] = useState<Record<string, 'up' | 'down'>>({})
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [showAgentActivity, setShowAgentActivity] = useState(false)
+  const [userName, setUserName] = useState('')
+  const [nameSubmitted, setNameSubmitted] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -534,6 +539,17 @@ export default function Page() {
       }
     } catch {
       // ignore parse errors
+    }
+
+    // Load saved user name
+    try {
+      const savedName = localStorage.getItem('it_support_user_name')
+      if (savedName) {
+        setUserName(savedName)
+        setNameSubmitted(true)
+      }
+    } catch {
+      // ignore
     }
   }, [])
 
@@ -620,7 +636,9 @@ export default function Page() {
     setActiveAgentId(MANAGER_AGENT_ID)
 
     try {
-      const result = await callAIAgent(message, MANAGER_AGENT_ID, {
+      // Prepend user name to every message so agent always knows who is asking
+      const agentMessage = `User: ${userName}. ${message}`
+      const result = await callAIAgent(agentMessage, MANAGER_AGENT_ID, {
         session_id: sessionId,
         user_id: userId,
       })
@@ -671,6 +689,7 @@ export default function Page() {
             question: message,
             createdAt: new Date().toISOString(),
             ticketId: ticketId,
+            reportedBy: userName || 'Unknown',
           }
           setTickets((prev) => [newTicket, ...prev])
           setBanner({
@@ -702,7 +721,7 @@ export default function Page() {
       setIsLoading(false)
       setActiveAgentId(null)
     }
-  }, [inputValue, isLoading, sessionId, userId])
+  }, [inputValue, isLoading, sessionId, userId, userName])
 
   // ---- Escalate (Fix 2: includes userName and notes) ----
   const handleEscalate = useCallback(async (originalQuestion: string, subject: string, priority: string, userName: string, notes: string) => {
@@ -750,6 +769,7 @@ export default function Page() {
           question: originalQuestion,
           createdAt: new Date().toISOString(),
           ticketId: ticketId,
+          reportedBy: userName || 'Unknown',
         }
         setTickets((prev) => [newTicket, ...prev])
         setBanner({
@@ -930,12 +950,18 @@ export default function Page() {
               {activeTab === 'kb' && 'Manage support documentation'}
             </p>
           </div>
-          {activeTab === 'chat' && isLoading && (
+          {activeTab === 'chat' && nameSubmitted && (
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs gap-1 animate-pulse border-emerald-200 text-emerald-600">
-                <RiLoader4Line className="w-3 h-3 animate-spin" />
-                Processing
+              <Badge variant="outline" className="text-xs gap-1 border-border/50 text-foreground/60">
+                <RiUserLine className="w-3 h-3" />
+                {userName}
               </Badge>
+              {isLoading && (
+                <Badge variant="outline" className="text-xs gap-1 animate-pulse border-emerald-200 text-emerald-600">
+                  <RiLoader4Line className="w-3 h-3 animate-spin" />
+                  Processing
+                </Badge>
+              )}
             </div>
           )}
         </header>
@@ -952,7 +978,7 @@ export default function Page() {
           <div className="flex-1 flex flex-col min-h-0">
             <div className="flex-1 overflow-y-auto px-4 py-4">
               <div className="max-w-3xl mx-auto space-y-5">
-                {/* Welcome */}
+                {/* Welcome + Name Prompt */}
                 {messages.length === 0 && !isLoading && (
                   <div className="flex flex-col items-center justify-center py-16 text-center">
                     <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
@@ -964,30 +990,87 @@ export default function Page() {
                     <p className="text-sm text-muted-foreground max-w-md leading-relaxed">
                       Ask me anything about IT troubleshooting, software issues, hardware problems, or product questions. I will search the knowledge base for answers or escalate to our support team when needed.
                     </p>
-                    <div className="flex flex-wrap gap-2 mt-6 justify-center">
-                      {[
-                        'How do I reset my VPN password?',
-                        'My email is not syncing',
-                        'Request a new laptop',
-                        'Send a test email',
-                      ].map((q) => (
-                        <button
-                          key={q}
-                          onClick={() => {
-                            if (q === 'Send a test email') {
-                              setInputValue('Send a test email to verify the email integration is working')
-                            } else {
-                              setInputValue(q)
-                            }
-                            textareaRef.current?.focus()
-                          }}
-                          className={cn('px-3 py-2 text-xs rounded-xl border border-border/50 text-foreground/70 bg-white/60 backdrop-blur-sm hover:bg-white hover:border-border hover:text-foreground transition-all duration-200', q === 'Send a test email' ? 'gap-1.5 flex items-center' : '')}
-                        >
-                          {q === 'Send a test email' && <RiMailSendLine className="w-3 h-3" />}
-                          {q}
-                        </button>
-                      ))}
-                    </div>
+
+                    {/* Name input - required before chatting */}
+                    {!nameSubmitted ? (
+                      <div className="mt-8 w-full max-w-sm">
+                        <div className="p-5 rounded-2xl bg-white/80 backdrop-blur-md border border-border/30 shadow-sm space-y-3">
+                          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                            <RiUserLine className="w-4 h-4 text-primary" />
+                            Please enter your name to get started
+                          </div>
+                          <Input
+                            value={userName}
+                            onChange={(e) => setUserName(e.target.value)}
+                            placeholder="Your full name"
+                            className="bg-white/90 border-border/50 text-sm"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && userName.trim()) {
+                                setNameSubmitted(true)
+                                try { localStorage.setItem('it_support_user_name', userName.trim()) } catch {}
+                                textareaRef.current?.focus()
+                              }
+                            }}
+                          />
+                          <Button
+                            onClick={() => {
+                              if (userName.trim()) {
+                                setNameSubmitted(true)
+                                try { localStorage.setItem('it_support_user_name', userName.trim()) } catch {}
+                                textareaRef.current?.focus()
+                              }
+                            }}
+                            disabled={!userName.trim()}
+                            className="w-full gap-2"
+                            size="sm"
+                          >
+                            <RiArrowRightSLine className="w-4 h-4" />
+                            Continue
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="mt-4 flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10">
+                          <RiUserLine className="w-3.5 h-3.5 text-primary" />
+                          <span className="text-xs font-medium text-foreground/70">Signed in as <span className="text-foreground font-semibold">{userName}</span></span>
+                          <button
+                            onClick={() => {
+                              setNameSubmitted(false)
+                              setUserName('')
+                              try { localStorage.removeItem('it_support_user_name') } catch {}
+                            }}
+                            className="ml-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            (change)
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap gap-2 mt-6 justify-center">
+                          {[
+                            'How do I reset my VPN password?',
+                            'My email is not syncing',
+                            'Request a new laptop',
+                            'Send a test email',
+                          ].map((q) => (
+                            <button
+                              key={q}
+                              onClick={() => {
+                                if (q === 'Send a test email') {
+                                  setInputValue('Send a test email to verify the email integration is working')
+                                } else {
+                                  setInputValue(q)
+                                }
+                                textareaRef.current?.focus()
+                              }}
+                              className={cn('px-3 py-2 text-xs rounded-xl border border-border/50 text-foreground/70 bg-white/60 backdrop-blur-sm hover:bg-white hover:border-border hover:text-foreground transition-all duration-200', q === 'Send a test email' ? 'gap-1.5 flex items-center' : '')}
+                            >
+                              {q === 'Send a test email' && <RiMailSendLine className="w-3 h-3" />}
+                              {q}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
 
@@ -1097,9 +1180,10 @@ export default function Page() {
                               <EscalationForm
                                 originalQuestion={messages.find((m) => m.role === 'user' && messages.indexOf(m) < messages.indexOf(msg))?.content || msg.content}
                                 suggestedSubject={msg.content.slice(0, 80)}
-                                onSubmit={(subject, priority, userName, notes) => {
+                                defaultUserName={userName}
+                                onSubmit={(subject, priority, escUserName, notes) => {
                                   const origQ = messages.find((m) => m.role === 'user' && messages.indexOf(m) < messages.indexOf(msg))?.content || msg.content
-                                  handleEscalate(origQ, subject, priority, userName, notes)
+                                  handleEscalate(origQ, subject, priority, escUserName, notes)
                                 }}
                                 onCancel={() => setEscalatingMessageId(null)}
                                 isSubmitting={isEscalating}
@@ -1148,8 +1232,9 @@ export default function Page() {
                     value={inputValue}
                     onChange={handleTextareaChange}
                     onKeyDown={handleKeyDown}
-                    placeholder="Ask your IT or product question..."
-                    className="min-h-[44px] max-h-[160px] resize-none pr-3 bg-white/80 backdrop-blur-sm border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-primary/30 text-sm"
+                    placeholder={nameSubmitted ? "Ask your IT or product question..." : "Please enter your name above first..."}
+                    disabled={!nameSubmitted}
+                    className="min-h-[44px] max-h-[160px] resize-none pr-3 bg-white/80 backdrop-blur-sm border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-primary/30 text-sm disabled:opacity-60"
                     rows={1}
                   />
                 </div>
@@ -1166,7 +1251,7 @@ export default function Page() {
                 ) : (
                   <Button
                     onClick={handleSendMessage}
-                    disabled={!inputValue.trim()}
+                    disabled={!inputValue.trim() || !nameSubmitted}
                     size="icon"
                     className="h-11 w-11 rounded-xl flex-shrink-0 shadow-md"
                   >
@@ -1235,6 +1320,12 @@ export default function Page() {
                               <PriorityBadge priority={ticket.priority} />
                             </div>
                             <h4 className="text-sm font-semibold text-foreground mb-1 line-clamp-1">{ticket.subject}</h4>
+                            {ticket.reportedBy && (
+                              <div className="flex items-center gap-1.5 mb-1">
+                                <RiUserLine className="w-3 h-3 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground font-medium">Reported by: {ticket.reportedBy}</span>
+                              </div>
+                            )}
                             <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{ticket.question}</p>
                           </div>
                           <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0 mt-1">
