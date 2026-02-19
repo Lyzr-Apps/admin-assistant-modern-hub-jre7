@@ -1,30 +1,30 @@
 {
   "agents": {
     "support_coordinator_manager": {
-      "agent_id": "6996ffb02e1ca01aa7c6df06",
+      "agent_id": "69971296953ca8351f0efd31",
       "type": "manager"
     },
     "knowledge_base_agent": {
-      "agent_id": "6996ff8206cf62004f22fa22",
+      "agent_id": "6997127ef908c28cb54245e0",
       "type": "sub-agent",
       "has_kb": true,
       "has_web_search": true,
-      "rag_id": "6996ff603dc9e9e528242432",
+      "rag_id": "6997125de12ce168202d4ad0",
       "tools": ["PERPLEXITYAI_PERPLEXITY_AI_SEARCH"]
     },
     "ticket_creator_agent": {
-      "agent_id": "6996ff9b7cb54fb612f26579",
+      "agent_id": "6997127f87d5b3967580ec38",
       "type": "sub-agent",
       "tools": ["HUBSPOT_CREATE_TICKET"]
     },
     "email_notifier_agent": {
-      "agent_id": "6996ff9c48f72e2d6a14006b",
+      "agent_id": "699712802e1ca01aa7c6dfa2",
       "type": "sub-agent",
       "tools": ["GMAIL_SEND_EMAIL"]
     }
   },
   "knowledge_base": {
-    "rag_id": "6996ff603dc9e9e528242432",
-    "rag_name": "itsupportknowledgebase4pzf"
+    "rag_id": "6997125de12ce168202d4ad0",
+    "rag_name": "itsupportkb5dfo"
   }
 }

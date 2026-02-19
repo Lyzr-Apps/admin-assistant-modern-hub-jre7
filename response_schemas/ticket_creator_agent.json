@@ -1,15 +1,13 @@
 {
   "agent_name": "Ticket Creator Agent",
-  "agent_id": "6996ff9b7cb54fb612f26579",
+  "agent_id": "6997127f87d5b3967580ec38",
   "agent_type": "sub-agent",
   "accessor": "json",
   "has_module_outputs": false,
   "schema": {
     "ticket_id": "string",
     "ticket_subject": "string",
-    "ticket_status": "string",
-    "priority": "string",
-    "success": "boolean",
+    "ticket_created": "boolean",
     "message": "string"
   }
 }

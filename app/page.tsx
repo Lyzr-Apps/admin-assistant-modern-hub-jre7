@@ -40,17 +40,18 @@ import {
   RiCloseLine,
   RiLoader4Line,
   RiPulseLine,
+  RiStopCircleLine,
 } from 'react-icons/ri'
 
 // ---- Constants ----
-const MANAGER_AGENT_ID = '6996ffb02e1ca01aa7c6df06'
-const RAG_ID = '6996ff603dc9e9e528242432'
+const MANAGER_AGENT_ID = '69971296953ca8351f0efd31'
+const RAG_ID = '6997125de12ce168202d4ad0'
 
 const AGENTS_INFO = [
-  { id: '6996ffb02e1ca01aa7c6df06', name: 'Support Coordinator Manager', purpose: 'Routes queries, orchestrates sub-agents' },
-  { id: '6996ff8206cf62004f22fa22', name: 'Knowledge Base Agent', purpose: 'Searches KB for answers' },
-  { id: '6996ff9b7cb54fb612f26579', name: 'Ticket Creator Agent', purpose: 'Creates support tickets' },
-  { id: '6996ff9c48f72e2d6a14006b', name: 'Email Notifier Agent', purpose: 'Sends notification emails' },
+  { id: '69971296953ca8351f0efd31', name: 'Support Coordinator Manager', purpose: 'Routes queries, orchestrates sub-agents' },
+  { id: '6997127ef908c28cb54245e0', name: 'Knowledge Base Agent', purpose: 'Searches KB for answers, web search fallback' },
+  { id: '6997127f87d5b3967580ec38', name: 'Ticket Creator Agent', purpose: 'Creates HubSpot support tickets' },
+  { id: '699712802e1ca01aa7c6dfa2', name: 'Email Notifier Agent', purpose: 'Sends Gmail notification emails' },
 ]
 
 // ---- Interfaces ----
@@ -350,7 +351,7 @@ function TypingIndicator() {
   )
 }
 
-// ---- Escalation Form ----
+// ---- Escalation Form (Fix 2: includes user name and additional notes) ----
 function EscalationForm({
   originalQuestion,
   suggestedSubject,
@@ -360,12 +361,14 @@ function EscalationForm({
 }: {
   originalQuestion: string
   suggestedSubject: string
-  onSubmit: (subject: string, priority: string) => void
+  onSubmit: (subject: string, priority: string, userName: string, notes: string) => void
   onCancel: () => void
   isSubmitting: boolean
 }) {
   const [subject, setSubject] = useState(suggestedSubject)
   const [priority, setPriority] = useState('Medium')
+  const [userName, setUserName] = useState('')
+  const [notes, setNotes] = useState('')
 
   return (
     <div className="mt-3 p-4 rounded-xl bg-amber-50/80 backdrop-blur-sm border border-amber-200/50 space-y-3">
@@ -385,7 +388,18 @@ function EscalationForm({
           />
         </div>
         <div>
-          <Label className="text-xs text-amber-800">Priority</Label>
+          <Label htmlFor="ticket-user-name" className="text-xs text-amber-800">Your Name *</Label>
+          <Input
+            id="ticket-user-name"
+            value={userName}
+            onChange={(e) => setUserName(e.target.value)}
+            placeholder="Your full name"
+            className="mt-1 text-sm bg-white/80 border-amber-200"
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="ticket-priority" className="text-xs text-amber-800">Priority</Label>
           <Select value={priority} onValueChange={setPriority}>
             <SelectTrigger className="mt-1 text-sm bg-white/80 border-amber-200">
               <SelectValue placeholder="Select priority" />
@@ -397,12 +411,23 @@ function EscalationForm({
             </SelectContent>
           </Select>
         </div>
+        <div>
+          <Label htmlFor="ticket-notes" className="text-xs text-amber-800">Additional Notes</Label>
+          <Textarea
+            id="ticket-notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Any additional context or details..."
+            className="mt-1 text-sm bg-white/80 border-amber-200 min-h-[60px]"
+            rows={2}
+          />
+        </div>
       </div>
       <div className="flex items-center gap-2">
         <Button
           size="sm"
-          onClick={() => onSubmit(subject, priority)}
-          disabled={isSubmitting || !subject.trim()}
+          onClick={() => onSubmit(subject, priority, userName, notes)}
+          disabled={isSubmitting || !subject.trim() || !userName.trim()}
           className="text-xs gap-1"
         >
           {isSubmitting ? (
@@ -609,7 +634,7 @@ export default function Page() {
           || (result.response?.result?.text)
           || (result.response?.result?.response)
           || (result.response?.result?.message)
-          || (result.raw_response ? 'Response received. Please try rephrasing if the answer seems incomplete.' : 'I received your query but could not generate a detailed response. Please try again.')
+          || 'Response received. Please try rephrasing if the answer seems incomplete.'
         const escalated = data?.escalated === true
         const ticketId = data?.ticket_id || ''
         const ticketSubject = data?.ticket_subject || ''
@@ -679,12 +704,12 @@ export default function Page() {
     }
   }, [inputValue, isLoading, sessionId, userId])
 
-  // ---- Escalate ----
-  const handleEscalate = useCallback(async (originalQuestion: string, subject: string, priority: string) => {
+  // ---- Escalate (Fix 2: includes userName and notes) ----
+  const handleEscalate = useCallback(async (originalQuestion: string, subject: string, priority: string, userName: string, notes: string) => {
     setIsEscalating(true)
     setActiveAgentId(MANAGER_AGENT_ID)
 
-    const escalationMessage = `ESCALATE: Please create a support ticket and send notification email for the following issue. Priority: ${priority}. Subject: ${subject}. Original question: ${originalQuestion}`
+    const escalationMessage = `ESCALATE: Please create a support ticket and send notification email. User Name: ${userName}. Priority: ${priority}. Subject: ${subject}. Additional Notes: ${notes || 'None'}. Original question: ${originalQuestion}`
 
     try {
       const result = await callAIAgent(escalationMessage, MANAGER_AGENT_ID, {
@@ -800,6 +825,13 @@ export default function Page() {
     }
   }
 
+  // ---- Stop handler ----
+  const handleStop = useCallback(() => {
+    setIsLoading(false)
+    setActiveAgentId(null)
+    setIsEscalating(false)
+  }, [])
+
   // ---- Render ----
   return (
     <div className="flex h-screen w-full overflow-hidden" style={{ background: 'linear-gradient(135deg, hsl(210 20% 97%) 0%, hsl(220 25% 95%) 35%, hsl(200 20% 96%) 70%, hsl(230 15% 97%) 100%)' }}>
@@ -898,21 +930,19 @@ export default function Page() {
               {activeTab === 'kb' && 'Manage support documentation'}
             </p>
           </div>
-          {activeTab === 'chat' && (
+          {activeTab === 'chat' && isLoading && (
             <div className="flex items-center gap-2">
-              {isLoading && (
-                <Badge variant="outline" className="text-xs gap-1 animate-pulse border-emerald-200 text-emerald-600">
-                  <RiLoader4Line className="w-3 h-3 animate-spin" />
-                  Processing
-                </Badge>
-              )}
+              <Badge variant="outline" className="text-xs gap-1 animate-pulse border-emerald-200 text-emerald-600">
+                <RiLoader4Line className="w-3 h-3 animate-spin" />
+                Processing
+              </Badge>
             </div>
           )}
         </header>
 
         {/* Banner */}
         {banner && (
-          <div className="px-4 pt-3">
+          <div className="px-4 pt-3 flex-shrink-0">
             <InlineBanner type={banner.type} message={banner.message} onDismiss={() => setBanner(null)} />
           </div>
         )}
@@ -939,15 +969,21 @@ export default function Page() {
                         'How do I reset my VPN password?',
                         'My email is not syncing',
                         'Request a new laptop',
+                        'Send a test email',
                       ].map((q) => (
                         <button
                           key={q}
                           onClick={() => {
-                            setInputValue(q)
+                            if (q === 'Send a test email') {
+                              setInputValue('Send a test email to verify the email integration is working')
+                            } else {
+                              setInputValue(q)
+                            }
                             textareaRef.current?.focus()
                           }}
-                          className="px-3 py-2 text-xs rounded-xl border border-border/50 text-foreground/70 bg-white/60 backdrop-blur-sm hover:bg-white hover:border-border hover:text-foreground transition-all duration-200"
+                          className={cn('px-3 py-2 text-xs rounded-xl border border-border/50 text-foreground/70 bg-white/60 backdrop-blur-sm hover:bg-white hover:border-border hover:text-foreground transition-all duration-200', q === 'Send a test email' ? 'gap-1.5 flex items-center' : '')}
                         >
+                          {q === 'Send a test email' && <RiMailSendLine className="w-3 h-3" />}
                           {q}
                         </button>
                       ))}
@@ -1061,9 +1097,9 @@ export default function Page() {
                               <EscalationForm
                                 originalQuestion={messages.find((m) => m.role === 'user' && messages.indexOf(m) < messages.indexOf(msg))?.content || msg.content}
                                 suggestedSubject={msg.content.slice(0, 80)}
-                                onSubmit={(subject, priority) => {
+                                onSubmit={(subject, priority, userName, notes) => {
                                   const origQ = messages.find((m) => m.role === 'user' && messages.indexOf(m) < messages.indexOf(msg))?.content || msg.content
-                                  handleEscalate(origQ, subject, priority)
+                                  handleEscalate(origQ, subject, priority, userName, notes)
                                 }}
                                 onCancel={() => setEscalatingMessageId(null)}
                                 isSubmitting={isEscalating}
@@ -1103,7 +1139,7 @@ export default function Page() {
               </div>
             </div>
 
-            {/* Input */}
+            {/* Input bar - flex-shrink-0 ensures it never gets pushed off screen */}
             <div className="px-4 py-3 border-t border-border/30 bg-white/40 backdrop-blur-md flex-shrink-0">
               <div className="max-w-3xl mx-auto flex items-end gap-3">
                 <div className="flex-1 relative">
@@ -1119,17 +1155,13 @@ export default function Page() {
                 </div>
                 {isLoading ? (
                   <Button
-                    onClick={() => {
-                      setIsLoading(false)
-                      setActiveAgentId(null)
-                      setIsEscalating(false)
-                    }}
+                    onClick={handleStop}
                     size="icon"
                     variant="destructive"
                     className="h-11 w-11 rounded-xl flex-shrink-0 shadow-md"
                     title="Stop request"
                   >
-                    <RiCloseLine className="w-5 h-5" />
+                    <RiStopCircleLine className="w-5 h-5" />
                   </Button>
                 ) : (
                   <Button

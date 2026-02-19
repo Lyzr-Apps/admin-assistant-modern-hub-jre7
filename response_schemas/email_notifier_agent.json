@@ -1,6 +1,6 @@
 {
   "agent_name": "Email Notifier Agent",
-  "agent_id": "6996ff9c48f72e2d6a14006b",
+  "agent_id": "699712802e1ca01aa7c6dfa2",
   "agent_type": "sub-agent",
   "accessor": "json",
   "has_module_outputs": false,
