@@ -7,6 +7,15 @@ export const maxDuration = 120
 const LYZR_API_URL = 'https://agent-prod.studio.lyzr.ai/v3/inference/chat/'
 const LYZR_API_KEY = process.env.LYZR_API_KEY || ''
 
+// Health check endpoint
+export async function GET() {
+  return NextResponse.json({
+    status: 'ok',
+    configured: !!LYZR_API_KEY,
+    timestamp: new Date().toISOString(),
+  })
+}
+
 // Types
 interface ArtifactFile {
   file_url: string
