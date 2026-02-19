@@ -724,11 +724,11 @@ export default function Page() {
   }, [inputValue, isLoading, sessionId, userId, userName])
 
   // ---- Escalate (Fix 2: includes userName and notes) ----
-  const handleEscalate = useCallback(async (originalQuestion: string, subject: string, priority: string, userName: string, notes: string) => {
+  const handleEscalate = useCallback(async (originalQuestion: string, subject: string, priority: string, escalateUserName: string, notes: string) => {
     setIsEscalating(true)
     setActiveAgentId(MANAGER_AGENT_ID)
 
-    const escalationMessage = `ESCALATE: Please create a support ticket and send notification email. User Name: ${userName}. Priority: ${priority}. Subject: ${subject}. Additional Notes: ${notes || 'None'}. Original question: ${originalQuestion}`
+    const escalationMessage = `ESCALATE: Please create a support ticket and send notification email. User Name: ${escalateUserName}. Priority: ${priority}. Subject: ${subject}. Additional Notes: ${notes || 'None'}. Original question: ${originalQuestion}`
 
     try {
       const result = await callAIAgent(escalationMessage, MANAGER_AGENT_ID, {
@@ -769,7 +769,7 @@ export default function Page() {
           question: originalQuestion,
           createdAt: new Date().toISOString(),
           ticketId: ticketId,
-          reportedBy: userName || 'Unknown',
+          reportedBy: escalateUserName || 'Unknown',
         }
         setTickets((prev) => [newTicket, ...prev])
         setBanner({
