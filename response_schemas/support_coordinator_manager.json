@@ -1,0 +1,17 @@
+{
+  "agent_name": "Support Coordinator Manager",
+  "agent_id": "6996ffb02e1ca01aa7c6df06",
+  "agent_type": "manager",
+  "accessor": "json",
+  "has_module_outputs": false,
+  "schema": {
+    "answer": "string",
+    "source": "string (knowledge_base|escalation|combined)",
+    "escalated": "boolean",
+    "ticket_id": "string",
+    "ticket_subject": "string",
+    "email_sent": "boolean",
+    "confidence": "string (high|medium|low)",
+    "requires_escalation": "boolean"
+  }
+}

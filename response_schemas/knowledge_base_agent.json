@@ -1,0 +1,16 @@
+{
+  "agent_name": "Knowledge Base Agent",
+  "agent_id": "6996ff8206cf62004f22fa22",
+  "agent_type": "sub-agent",
+  "accessor": "json",
+  "has_module_outputs": false,
+  "has_knowledge_base": true,
+  "rag_id": "6996ff603dc9e9e528242432",
+  "schema": {
+    "answer": "string",
+    "found_in_kb": "boolean",
+    "confidence": "string (high|medium|low)",
+    "source_section": "string",
+    "suggestion": "string"
+  }
+}

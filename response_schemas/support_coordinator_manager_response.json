@@ -1,0 +1,28 @@
+{
+  "agent_name": "Support Coordinator Manager",
+  "agent_id": "6996ffb02e1ca01aa7c6df06",
+  "description": "Coordinates the support workflow: routes user queries to the KB agent for answers, presents the response with escalation option, and orchestrates ticket creation + email notification when escalation is triggered",
+  "agent_type": "json",
+  "accessor": "result",
+  "auto_generated": true,
+  "response_schema": {
+    "answer": "string",
+    "source": "string",
+    "escalated": "boolean",
+    "ticket_id": "string",
+    "ticket_subject": "string",
+    "email_sent": "boolean",
+    "confidence": "string",
+    "requires_escalation": "boolean"
+  },
+  "example_response": {
+    "answer": "The response to show the user",
+    "source": "Where the answer came from: knowledge_base, escalation, or combined",
+    "escalated": false,
+    "ticket_id": "The ticket ID if escalation occurred",
+    "ticket_subject": "The ticket subject if escalation occurred",
+    "email_sent": false,
+    "confidence": "Confidence level of the KB answer if applicable",
+    "requires_escalation": false
+  }
+}
