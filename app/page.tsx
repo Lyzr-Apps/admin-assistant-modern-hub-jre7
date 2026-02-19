@@ -40,7 +40,7 @@ import {
   RiMenuLine,
   RiCloseLine,
   RiLoader4Line,
-  RiActivityLine,
+  RiPulseLine,
 } from 'react-icons/ri'
 
 // ---- Constants ----
@@ -825,7 +825,7 @@ export default function Page() {
             onClick={() => setShowAgentActivity(!showAgentActivity)}
             className={cn('w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200', showAgentActivity ? 'bg-accent text-foreground' : 'text-foreground/70 hover:bg-accent hover:text-foreground')}
           >
-            <RiActivityLine className="w-4 h-4 flex-shrink-0" />
+            <RiPulseLine className="w-4 h-4 flex-shrink-0" />
             Agent Activity
           </button>
         </nav>
