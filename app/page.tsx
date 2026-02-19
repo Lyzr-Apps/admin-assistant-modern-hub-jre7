@@ -306,6 +306,14 @@ function SourceBadge({ source }: { source: string }) {
       </Badge>
     )
   }
+  if (s === 'web_search') {
+    return (
+      <Badge variant="outline" className="text-xs gap-1 border-teal-200 text-teal-600">
+        <RiSearchLine className="w-3 h-3" />
+        Web Search
+      </Badge>
+    )
+  }
   if (s === 'escalation') {
     return (
       <Badge variant="outline" className="text-xs gap-1 border-orange-200 text-orange-600">

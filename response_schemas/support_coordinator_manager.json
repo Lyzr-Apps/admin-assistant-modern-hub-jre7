@@ -6,7 +6,7 @@
   "has_module_outputs": false,
   "schema": {
     "answer": "string",
-    "source": "string (knowledge_base|escalation|combined)",
+    "source": "string (knowledge_base|web_search|escalation|combined)",
     "escalated": "boolean",
     "ticket_id": "string",
     "ticket_subject": "string",

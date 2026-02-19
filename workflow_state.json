@@ -8,7 +8,9 @@
       "agent_id": "6996ff8206cf62004f22fa22",
       "type": "sub-agent",
       "has_kb": true,
-      "rag_id": "6996ff603dc9e9e528242432"
+      "has_web_search": true,
+      "rag_id": "6996ff603dc9e9e528242432",
+      "tools": ["PERPLEXITYAI_PERPLEXITY_AI_SEARCH"]
     },
     "ticket_creator_agent": {
       "agent_id": "6996ff9b7cb54fb612f26579",

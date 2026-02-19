@@ -5,12 +5,14 @@
   "accessor": "json",
   "has_module_outputs": false,
   "has_knowledge_base": true,
+  "has_web_search": true,
   "rag_id": "6996ff603dc9e9e528242432",
+  "tools": ["PERPLEXITYAI_PERPLEXITY_AI_SEARCH"],
   "schema": {
     "answer": "string",
-    "found_in_kb": "boolean",
+    "found_in_kb": "boolean (false when answer comes from web search)",
     "confidence": "string (high|medium|low)",
-    "source_section": "string",
+    "source_section": "string (KB section name or web source attribution)",
     "suggestion": "string"
   }
 }
