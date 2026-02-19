@@ -1241,7 +1241,15 @@ export default function Page() {
       {/* ===== AGENT ACTIVITY PANEL ===== */}
       {showAgentActivity && (
         <div className="w-80 border-l border-border/30 bg-white/50 backdrop-blur-md flex-shrink-0 overflow-hidden">
-          <AgentActivityPanel sessionId={sessionId} />
+          <AgentActivityPanel
+            isConnected={agentEvents.isConnected}
+            events={agentEvents.events}
+            thinkingEvents={agentEvents.thinkingEvents}
+            lastThinkingMessage={agentEvents.lastThinkingMessage}
+            activeAgentId={agentEvents.activeAgentId}
+            activeAgentName={agentEvents.activeAgentName}
+            isProcessing={agentEvents.isProcessing}
+          />
         </div>
       )}
     </div>
