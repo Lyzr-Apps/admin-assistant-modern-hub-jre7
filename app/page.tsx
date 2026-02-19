@@ -555,6 +555,18 @@ export default function Page() {
     }
   }, [sampleDataOn])
 
+  // ---- Safety: reset stuck loading state after 120s ----
+  useEffect(() => {
+    if (!isLoading) return
+    const safetyTimer = setTimeout(() => {
+      setIsLoading(false)
+      setActiveAgentId(null)
+      setIsEscalating(false)
+      setBanner({ type: 'error', message: 'Request timed out. Please try again.' })
+    }, 120000)
+    return () => clearTimeout(safetyTimer)
+  }, [isLoading])
+
   // ---- Textarea auto-resize ----
   const handleTextareaChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value)
@@ -1104,21 +1116,32 @@ export default function Page() {
                     placeholder="Ask your IT or product question..."
                     className="min-h-[44px] max-h-[160px] resize-none pr-3 bg-white/80 backdrop-blur-sm border-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-primary/30 text-sm"
                     rows={1}
-                    disabled={isLoading}
                   />
                 </div>
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={isLoading || !inputValue.trim()}
-                  size="icon"
-                  className="h-11 w-11 rounded-xl flex-shrink-0 shadow-md"
-                >
-                  {isLoading ? (
-                    <RiLoader4Line className="w-5 h-5 animate-spin" />
-                  ) : (
+                {isLoading ? (
+                  <Button
+                    onClick={() => {
+                      setIsLoading(false)
+                      setActiveAgentId(null)
+                      setIsEscalating(false)
+                    }}
+                    size="icon"
+                    variant="destructive"
+                    className="h-11 w-11 rounded-xl flex-shrink-0 shadow-md"
+                    title="Stop request"
+                  >
+                    <RiCloseLine className="w-5 h-5" />
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleSendMessage}
+                    disabled={!inputValue.trim()}
+                    size="icon"
+                    className="h-11 w-11 rounded-xl flex-shrink-0 shadow-md"
+                  >
                     <RiSendPlaneFill className="w-5 h-5" />
-                  )}
-                </Button>
+                  </Button>
+                )}
               </div>
             </div>
           </div>
